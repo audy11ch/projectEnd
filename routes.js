@@ -2,8 +2,8 @@ const { Router } = require('express');
 const db = require('./db')
 const router = Router();
 db.connect()
-  .then(() => console.log('Connected to the database doanything file'))
-  .catch(err => console.error('Error connecting to the database', err));
+  .then(() => console.log('ยินดีต้อนรับกลับ'))
+  .catch(err => console.error('ออกไป๊', err));
 router.post("/",(req,res) =>{
    return res.send("using api router");
 });
