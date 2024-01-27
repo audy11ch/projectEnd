@@ -5,7 +5,7 @@ db.connect()
   .then(() => console.log('ยินดีต้อนรับกลับ'))
   .catch(err => console.error('ออกไป๊', err));
 router.post("/",(req,res) =>{
-   return res.send("using api router");
+   return res.send("หน้าแรก");
 });
 router.post("/tontai",async(req,res)=>{
     try {
@@ -21,4 +21,18 @@ router.post("/tontai",async(req,res)=>{
         console.log(error)
     }
 })
+
+router.post("/resister",async(req,res)=>{
+    try {
+        const obj  = req.body;
+        if(obj){
+            db.query(`insert into user (email,phone,password) values ($1,$2,$3) returning user_id`,[obj.user,obj.password_1])
+        }
+    }
+    catch(err){
+        console.log("ไม่ผ่าน")
+    }
+})
+
+
 module.exports = router;
