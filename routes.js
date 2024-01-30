@@ -10,9 +10,9 @@ router.post("/",(req,res) =>{
 router.post("/tontai",async(req,res)=>{
     try {
         const {name,phone} = req.body
-        const SELECT = await db.query(`select * from login where firstname = $1 AND phone = $2`,[name,phone])
+        const SELECT = await db.query(`select phone,student_id from public.user where firstname = $1 AND phone = $2`,[name,phone])
         if(SELECT.rowCount){
-            return res.status(200).json({data:SELECT.rows})
+            return res.status(200).text({data:SELECT.rows})
         }
         else{
             return res.status(200).json({data:"ไม่ถูก--"})
