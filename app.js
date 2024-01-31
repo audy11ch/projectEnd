@@ -13,5 +13,4 @@ app.use((req, res, next) => {
  });
 
 app.use("/api",apiRouter)
-
 app.listen(port,() => console.log(`hello word ${port}`));
