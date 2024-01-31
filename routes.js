@@ -12,7 +12,7 @@ router.post("/tontai",async(req,res)=>{
         const {user,password_1} = req.body
             console.log(user,password_1)
             
-        const SELECT = await db.query(`select student_id,firstname from public.user where  student_id = $1 AND password = $2`,[user,password_1])
+        const SELECT = await db.query(`select email,firstname from public.user where  email = $1 AND password = $2`,[user,password_1])
         if(SELECT.rowCount){
             return res.status(200).json({data:SELECT.rows})
         }
@@ -23,18 +23,25 @@ router.post("/tontai",async(req,res)=>{
         console.log(error)
     }
 })
+router.post("/insertdata", async (req, res) => {
+  try {
+    const { NaMe, lastname, pho_ne, emai_l } = req.body;
+    console.log(NaMe, lastname, pho_ne, emai_l);
 
-router.post("/resister",async(req,res)=>{
-    try {
-        const obj  = req.body;
-        if(obj){
-            db.query(`insert into user (email,phone,password) values ($1,$2,$3) returning user_id`,[obj.user,obj.password_1])
-        }
+    const INSERT = await db.query('INSERT INTO public.user (firstname, lastname, phone, email) VALUES ($1, $2, $3, $4)', [NaMe, lastname, pho_ne, emai_l]);
+
+    // Check if the insertion was successful
+    if (INSERT.rowCount !== null && INSERT.rowCount > 0) {
+      return res.status(200).json({data:INSERT.rows})
+    } else {
+      return res.status(400).json({ msg: "Insertion failed" });
     }
-    catch(err){
-        console.log("ไม่ผ่าน")
-    }
-})
+  } catch (error) {
+    console.error("Error in /insertdata endpoint:", error);
+    return res.status(500).json({ error: "Internal server error", details: error.message });
+  }
+});
+
 
 
 
