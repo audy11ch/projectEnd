@@ -66,13 +66,12 @@ router.post("/register", async (req, res) => {
     }
 });
 
-
 router.post("/typecar", async (req, res) => {
     try {
-        const { cartype,colorcar,btnnunmber,btnnunmber1,btnnunmber2 } = req.body;
-        console.log(cartype,colorcar,btnnunmber,btnnunmber1,btnnunmber2);
+        const { btnnunmber,btnnunmber1,btnnunmber2,cartype,colorcar } = req.body;
+        console.log(btnnunmber,btnnunmber1,btnnunmber2,cartype,colorcar);
 
-        const INSERT = await db.query('INSERT INTO public.carnumber (car_number,car_country,car_text,cartype,carcolor)  VALUES ($1, $2)', [cartype, colorcar,btnnunmber,btnnunmber1,btnnunmber2]);
+        const INSERT = await db.query('INSERT INTO public.carnumber (car_number,car_country,car_text,cartype,carcolor)  VALUES ($1, $2, $3, $4, $5)', [btnnunmber,btnnunmber1,btnnunmber2,cartype,colorcar]);
 
         // Check if the insertion was successful
         if (INSERT.rowCount) {
@@ -85,10 +84,6 @@ router.post("/typecar", async (req, res) => {
         return res.status(500).json({ error: "Internal server error", details: error.message });
     }
 });
-
-
-
-
 
 
 module.exports = router;
