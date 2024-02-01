@@ -42,15 +42,15 @@ router.post("/insertdata", async (req, res) => {
         return res.status(500).json({ error: "Internal server error", details: error.message });
     }
 });
-router.post("/insertcar", async (req, res) => {
+router.post("/typecar", async (req, res) => {
     try {
-        const { CarType, CarColor } = req.body;
-        console.log(CarType, CarColor);
+        const { cartype,colorcar } = req.body;
+        console.log(cartype,colorcar);
 
-        const INSERT = await db.query('INSERT INTO public.carnumber (car_type, car_color) VALUES ($1, $2) ', [CarType, CarColor]);
+        const INSERT = await db.query('INSERT INTO public.carnumber (cartype,carcolor)  VALUES ($1, $2)', [cartype, colorcar]);
 
         // Check if the insertion was successful
-        if (INSERT.rowCount !== null && INSERT.rowCount > 0) {
+        if (INSERT.rowCount) {
             return res.status(200).json({ data: INSERT.rows[0] }); // Returning the first inserted row
         } else {
             return res.status(400).json({ msg: "Insertion failed" });
