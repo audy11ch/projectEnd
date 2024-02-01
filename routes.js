@@ -2,6 +2,7 @@ const { Router } = require('express');
 const jwt = require('jsonwebtoken');
 const db = require('./db')
 const router = Router();
+require('dotenv').config();
 
 
 db.connect()
@@ -68,7 +69,7 @@ router.post("/register", async (req, res) => {
 });
 
 
-router.post("/typecar", async (req, res) => {
+router.post("/edit", async (req, res) => {
     try {
         const { cartype,colorcar } = req.body;
         console.log(cartype,colorcar);
