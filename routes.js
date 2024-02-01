@@ -68,8 +68,7 @@ router.post("/register", async (req, res) => {
     }
 });
 
-
-router.post("/edit", async (req, res) => {
+router.post("/typecar", async (req, res) => {
     try {
         const { cartype,colorcar } = req.body;
         console.log(cartype,colorcar);
