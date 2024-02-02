@@ -8,23 +8,47 @@ db.connect()
     .catch(err => console.error('ออกไป๊', err));
 router.post('/',(req,res) =>res.json({msg:'JWT'}) ) 
 
+const TOKENKEY = process.env.TOKEN_KEY || 'your_default_token_key';
+const tokenReKey = process.env.TOKEN_KEY_REFRESH || 'your_default_token_refresh_key';
 
 router.post("/login", async (req, res) => {
-    try {
-        const { user, password_1 } = req.body
-        console.log(user, password_1)
+    
 
-        const SELECT = await db.query(`select email,firstname from public.user where  email = $1 AND password = $2`, [user, password_1])
+    try {
+        const { user, password_1 } = req.body;
+        console.log(user, password_1);
+
+        // Assuming you're using 'db.query' to check user credentials
+        const SELECT = await db.query(`SELECT email, firstname FROM public.user WHERE email = $1 AND password = $2`, [user, password_1]);
         if (SELECT.rowCount) {
-            return res.status(200).json({ data: SELECT.rows })
-        }
-        else {
-            return res.status(400).json({ msg: "ไม่ถูก--" })
-        }
+            const user_id = SELECT.rows[0].user_id;  // <-- Fix here
+            const token = jwt.sign(
+                { user_id: SELECT.rows[0].user_id, email: SELECT.rows[0].email },
+                TOKENKEY,
+                {
+                    expiresIn: "99y"
+                }
+            );
+        
+            const token_re = jwt.sign(
+                { user_id: SELECT.rows[0].user_id, email: SELECT.rows[0].email },
+                tokenReKey,
+                {
+                    expiresIn: "99y"
+                }
+            );
+        
+            return res.status(200).json({ user_id, token, token_re });
+        } else {
+            return res.status(200).json({ ms: 'bad3', data: '-' });
+        }        
     } catch (error) {
-        console.log(error)
+        console.log(error);
+        return res.status(500).json({ error: "Internal server error", details: error.message });
     }
-})
+});
+
+
 // Import dotenv if you are using a .env file
 // require('dotenv').config();
 
