@@ -9,22 +9,43 @@ db.connect()
 router.post('/',(req,res) =>res.json({msg:'JWT'}) ) 
 
 
+process.env.JWT_KEY = 'your_long_random_secret_key_here';
+
 router.post("/login", async (req, res) => {
     try {
-        const { user, password_1 } = req.body
-        console.log(user, password_1)
+        const { user, password_1 } = req.body;
+        console.log(user, password_1);
 
-        const SELECT = await db.query(`select email,firstname from public.user where  email = $1 AND password = $2`, [user, password_1])
+        const SELECT = await db.query(
+            `SELECT user_id, email, firstname, lastname FROM public.user WHERE email = $1 AND password = $2`,
+            [user, password_1]
+        );
+
         if (SELECT.rowCount) {
-            return res.status(200).json({ data: SELECT.rows })
-        }
-        else {
-            return res.status(400).json({ msg: "ไม่ถูก--" })
+            const user_id = SELECT.rows[0].user_id;
+
+            const token = jwt.sign(
+                { user_id, email: SELECT.rows[0].email, Name: SELECT.rows[0].firstname, lastname: SELECT.rows[0].lastname },
+                process.env.JWT_KEY,
+                { expiresIn: "1h" }
+            );
+
+            const tokenRefresh = jwt.sign(
+                { user_id, email: SELECT.rows[0].email, Name: SELECT.rows[0].firstname, lastname: SELECT.rows[0].lastname },
+                process.env.JWT_KEY,
+                { expiresIn: "1d" }
+            );
+
+            return res.status(200).json({ data: { user_id, token, tokenRefresh } });
+        } else {
+            return res.status(400).json({ msg: "Login failed" });
         }
     } catch (error) {
-        console.log(error)
+        console.log(error);
+        return res.status(500).json({ error: "Internal server error", details: error.message });
     }
-})
+});
+
 // Import dotenv if you are using a .env file
 // require('dotenv').config();
 
