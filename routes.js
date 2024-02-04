@@ -11,6 +11,8 @@ router.post('/',(req,res) =>res.json({msg:'JWT'}) )
 
 process.env.JWT_KEY = 'your_long_random_secret_key_here';
 
+SecretKey = 'your_long_random_secret_key_here';
+
 router.post("/login", async (req, res) => {
     try {
         const { user, password_1 } = req.body;
@@ -27,7 +29,7 @@ router.post("/login", async (req, res) => {
             const token = jwt.sign(
                 { user_id, email: SELECT.rows[0].email, Name: SELECT.rows[0].firstname, lastname: SELECT.rows[0].lastname },
                 process.env.JWT_KEY,
-                { expiresIn: "1h" }
+                { expiresIn: "7d" }
             );
 
             const tokenRefresh = jwt.sign(
@@ -105,6 +107,44 @@ router.post("/typecar", async (req, res) => {
         return res.status(500).json({ error: "Internal server error", details: error.message });
     }
 });
+
+function verifyToken(token) {
+    return new Promise((resolve, reject) => {
+      jwt.verify(token, SecretKey, (err, decoded) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(decoded);
+        }
+      });
+    });
+  }
+
+router.post("/token" , async(req, res)=>{
+
+    try {
+        const token = req.headers.authorization;
+        const token_data = await verifyToken(token);
+    
+        const u_id = token_data.user_id
+    
+        console.log(u_id)
+        const SELECT = await db.query(
+            `SELECT user_id FROM public.user WHERE user_id = $1 `,[u_id]);
+            if(SELECT.rowCount >= 0){
+                return res.status(200).json({ check_user:SELECT.rowCount}); 
+            }
+            else{
+                return res.status(400).json({ msg: "Insertion failed" });
+            }
+        
+    } catch (error) {
+        return res.status(500).json({ error: "Internal server error", details: error.message });
+    }
+
+
+    
+})
 
 
 module.exports = router;
