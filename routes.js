@@ -10,8 +10,7 @@ router.post('/', (req, res) => res.json({ msg: 'JWT' }))
 
 
 process.env.JWT_KEY = 'your_long_random_secret_key_here';
-
-SecretKey = 'your_long_random_secret_key_here';
+const SecretKey = 'your_long_random_secret_key_here';
 
 router.post("/login", async (req, res) => {
     try {
@@ -29,7 +28,7 @@ router.post("/login", async (req, res) => {
             const token = jwt.sign(
                 { user_id, email: SELECT.rows[0].email, Name: SELECT.rows[0].firstname, lastname: SELECT.rows[0].lastname },
                 process.env.JWT_KEY,
-                { expiresIn: "7d" }
+                { expiresIn: "1h" }
             );
 
             const tokenRefresh = jwt.sign(
@@ -61,7 +60,7 @@ router.post("/register", async (req, res) => {
         console.log(Name, lastname, phone, email, password);
 
         const INSERT = await db.query(
-            'INSERT INTO public.user (firstname, lastname, phone, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING user_id', 
+            'INSERT INTO public.user (firstname, lastname, phone, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING user_id',
             [Name, lastname, phone, email, password]);
 
         // Check if the insertion was successful
@@ -94,21 +93,31 @@ router.post("/register", async (req, res) => {
 router.post("/updateUser", async (req, res) => {
     try {
         const { user_id, updatedName, updatedLastName, newStudentID, updatedPhone } = req.body;
-        
+
+        // Validate input
+    // if (!user_id || !updatedName || !updatedLastName || !newStudentID || !updatedPhone) {
+    //     return res.status(400).json({ msg: "Invalid or missing parameters" });
+    // }
+
+        // Update user in the database
         const UPDATE = await db.query(
-            'UPDATE public.user SET firstname = $2, lastname = $3, student_id = $4 phone = $5 WHERE user_id = $1 RETURNING user_id',
-            [user_id, updatedName, updatedLastName, newStudentID,updatedPhone, ]
+            'UPDATE public.user SET firstname = $2, lastname = $3, student_id = $4, phone = $5 WHERE user_id = $1 RETURNING user_id',
+            [user_id, updatedName, updatedLastName, newStudentID, updatedPhone]
         );
+
+        // Check if the update was successful
         if (UPDATE.rowCount) {
-            return res.status(200).json({ msg: "อัพเดตสำเร็จ" });
+            return res.status(200).json({ msg: "Update successful" });
         } else {
-            return res.status(400).json({ msg: "อัพเดตไม่ได้" });
+            return res.status(400).json({ msg: "Update unsuccessful" });
         }
     } catch (error) {
-        console.error("Error in /updateUser endpoint:", error);
+        console.error("Error in /api/updateUser endpoint:", error);
         return res.status(500).json({ error: "Internal server error", details: error.message });
     }
 });
+
+
 
 router.post("/insertprofile", async (req, res) => {
     try {
@@ -116,7 +125,7 @@ router.post("/insertprofile", async (req, res) => {
         console.log(Birthday, Gander, Imgprofile);
 
         const INSERT = await db.query(
-            'INSERT INTO public.user (birthday, gander, img_pro) VALUES ($1, $2, $3) RETURNING user_id', 
+            'INSERT INTO public.user (birthday, gander, img_pro) VALUES ($1, $2, $3) RETURNING user_id',
             [Birthday, Gander, Imgprofile]
         );
         if (INSERT.rowCount) {
@@ -172,8 +181,8 @@ router.post("/token" , async(req, res)=>{
         console.log(u_id)
         const SELECT = await db.query(
             `SELECT user_id FROM public.user WHERE user_id = $1 `,[u_id]);
-            if(SELECT.rowCount >= 0){
-                return res.status(200).json({ check_user:SELECT.rowCount}); 
+            if(SELECT.rowCount ){
+                return res.status(200).json({ check_user: SELECT.rowCount}); 
             }
             else{
                 return res.status(400).json({ msg: "Insertion failed" });
@@ -183,8 +192,6 @@ router.post("/token" , async(req, res)=>{
         return res.status(500).json({ error: "Internal server error", details: error.message });
     }
 
-
-    
 })
 
 
