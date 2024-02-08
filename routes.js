@@ -195,38 +195,38 @@ router.post("/updateprofile", async (req, res) => {
 
 
 
-router.post("/camerasend", async (req, res) => {
+  router.post("/camerasend", async (req, res) => {
     try {
-        const { base64String } = req.body;
-
-        // Check if the 'camera' property exists in the request body
-        if (!base64String) {
-            return res.status(400).json({ error: "Missing 'camera' property in the request body" });
-        }
-
-        // Process the 'camera' data as needed
-        //   console.log(base64String);
-        // ส่งข้อมูลไปให้ python
-        const apiUrl = 'http://localhost:5000/api/hello';
-        const jsonData = { a: base64String };
+      const { base64String } = req.body;
+  
+      // Check if the 'camera' property exists in the request body
+      if (!base64String) {
+        return res.status(400).json({ error: "Missing 'camera' property in the request body" });
+      }
+  
+      // Process the 'camera' data as needed
+    //   console.log(base64String);
+      // ส่งข้อมูลไปให้ python
+      const apiUrl = 'http://localhost:5000/api/hello';
+      const jsonData = { a: base64String };
         axios.post(apiUrl, jsonData)
-            .then(response => {
-                console.log('Response from the server:', response.data);
-            })
-            .catch(error => {
-                console.error('Error:', error.message);
-            });
+        .then(response => {
+            console.log('Response from the server:', response.data);
+        })
+        .catch(error => {
+            console.error('Error:', error.message);
+        });
 
 
-        // Send a success response to the client
-        return res.status(200).json({ message: "รอฟังก์ชั่นอื่นส่งค่ามา" });
+      // Send a success response to the client
+      return res.status(200).json({ message: "รอฟังก์ชั่นอื่นส่งค่ามา" });
     } catch (error) {
-        console.error("Error in /camerasend endpoint:", error);
-
-        // Send an error response to the client
-        return res.status(500).json({ error: "Internal server error" });
+      console.error("Error in /camerasend endpoint:", error);
+  
+      // Send an error response to the client
+      return res.status(500).json({ error: "Internal server error" });
     }
-});
+  });
 
 
 
@@ -266,5 +266,22 @@ router.post("/token", async (req, res) => {
 
 })
 
+router.post("/showprofile", async (req, res) => {
+    try {
+        const SELECT = await db.query(
+            `SELECT user_id, email, firstname, lastname FROM public.user WHERE email = $1 AND password = $2`,
+        );
 
+        if (SELECT.rowCount) {
+            const user_id = SELECT.rows[0].user_id;
+
+            return res.status(200).json({ data: { user_id} });
+        } else {
+            return res.status(400).json({ msg: "Login failed" });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "Internal server error", details: error.message });
+    }
+});
 module.exports = router;
