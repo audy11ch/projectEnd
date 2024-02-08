@@ -140,47 +140,46 @@ router.post("/typecar", async (req, res) => {
 });
 
 
+
 router.post("/updateprofile", async (req, res) => {
     try {
-      const { newName, newLastName, newStudentID, newPhone, dt_date, gander_e, btn_img1 } = req.body;
-  
-      // ตรวจสอบว่าค่าที่ส่งมาไม่ใช่ null หรือ undefined
-      if (newName === undefined || newLastName === undefined || newStudentID === undefined ||
-          newPhone === undefined || dt_date === undefined || gander_e === undefined || 
-          btn_img1 === undefined) {
-        return res.status(400).json({ message: 'ข้อมูลไม่ครบถ้วน' });
-      }
-  
-      // ดึง user_id จากฐานข้อมูล
-      const getUserIdQuery = 'SELECT user_id FROM public.user WHERE firstname = $1 AND lastname = $2';
-      db.query(getUserIdQuery, [newName, newLastName], (err, result) => {
-        if (err) {
-          console.error('เกิดข้อผิดพลาดในการดึง user_id:', err);
-          return res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึง user_id' });
+        const { newName, newLastName, newStudentID, newPhone, dt_date, gander_e, btn_img1 } = req.body;
+
+        // ตรวจสอบว่าค่าที่ส่งมาไม่ใช่ null หรือ undefined
+        if (newName === undefined || newLastName === undefined || newStudentID === undefined ||
+            newPhone === undefined || dt_date === undefined || gander_e === undefined ||
+            btn_img1 === undefined) {
+            return res.status(400).json({ message: 'ข้อมูลไม่ครบถ้วน' });
         }
-  
-        if (result.length === 0) {
-          return res.status(404).json({ message: 'ไม่พบผู้ใช้ที่ตรงกับชื่อและนามสกุลที่ระบุ' });
-        }
-  
-        const user_id = result[0].user_id;
-  
-        // Try to update the record
-        const updateQuery = 'UPDATE public.user SET firstname = ?, lastname = ?, student_id = ?, phone = ?, birthday = ?, gander = ?, img_pro = ? WHERE user_id = ?';
-        db.query(updateQuery, [newName, newLastName, newStudentID, newPhone, dt_date, gander_e, btn_img1, user_id], (err, result) => {
-          if (err) {
-            console.error('เกิดข้อผิดพลาดในการอัปเดตข้อมูล:', err);
-            res.status(500).json({ message: 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล' });
-          } else {
+
+        // ดึง user_id จากฐานข้อมูล
+        const email = req.body.email; // Assuming the email is sent in the request body
+        const getUserIdQuery = 'SELECT user_id FROM public.user WHERE email = $1';
+        
+        try {
+            const result = await db.query(getUserIdQuery, [email]);
+
+            if (!result || result.rows.length === 0) {
+                return res.status(404).json({ message: 'ไม่พบผู้ใช้ที่ตรงกับชื่อและนามสกุลที่ระบุ' });
+            }
+
+            const user_id = result.rows[0].user_id;
+
+            // Try to update the record
+            const updateQuery = 'UPDATE public.user SET firstname = $1, lastname = $2, student_id = $3, phone = $4, birthday = $5, gander = $6, img_pro = $7 WHERE user_id = $8';
+            await db.query(updateQuery, [newName, newLastName, newStudentID, newPhone, dt_date, gander_e, btn_img1, user_id]);
+
             res.status(200).json({ message: 'การอัปเดตเสร็จสมบูรณ์' });
-          }
-        });
-      });
+        } catch (error) {
+            console.error("Error in /updateprofile endpoint:", error);
+            return res.status(500).json({ error: "Internal server error", details: error.message });
+        }
     } catch (error) {
-      console.error("Error in /updateprofile endpoint:", error);
-      return res.status(500).json({ error: "Internal server error", details: error.message });
+        console.error("Error in /updateprofile endpoint:", error);
+        return res.status(500).json({ error: "Internal server error", details: error.message });
     }
-  });
+});
+
   
   
 
