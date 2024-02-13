@@ -57,7 +57,7 @@ const tokenRefreshKey = process.env.TOKEN_KEY_REFRESH || 'your_default_token_ref
 
 router.post("/register", async (req, res) => {
     try {
-        const { Name, lastname, phone, email, password } = req.body;
+        const { Name, lastname, phone, email, password, car_number, car_country, car_text } = req.body;
         console.log(Name, lastname, phone, email, password);
 
         const INSERT = await db.query(
@@ -66,6 +66,11 @@ router.post("/register", async (req, res) => {
         // Check if the insertion was successful
         if (INSERT.rowCount) {
             const user_id = INSERT.rows[0].user_id;
+            const insertcar = db.query('INSERT INTO public.carnumber (car_number, car_country, car_text) VALUES ($1, $2, $3) RETURNING user_id')
+            [car_number, car_country, car_text];
+            if (insertcar) {
+                res.status(200).json({ message: 'Profile insert successfully' });
+            }
             const token = jwt.sign(
                 { user_id, email, Name, lastname },
                 tokenKey, // Use the tokenKey variable here
@@ -80,6 +85,7 @@ router.post("/register", async (req, res) => {
                     expiresIn: "99y"
                 }
             );
+
             return res.status(200).json({ data: { user_id, token, tokenRefresh } });
         } else {
             return res.status(400).json({ msg: "Insertion failed" });
@@ -94,44 +100,24 @@ router.post("/register", async (req, res) => {
 
 
 
-// router.post("/insertprofile", async (req, res) => {
-//     try {
-//         const { Birthday, Gander, Imgprofile } = req.body;
-//         console.log(Birthday, Gander, Imgprofile);
-
-//         const INSERT = await db.query(
-//             'INSERT INTO public.user (birthday, gander, img_pro) VALUES ($1, $2, $3) RETURNING user_id',
-//             [Birthday, Gander, Imgprofile]
-//         );
-//         if (INSERT.rowCount) {
-//             return res.status(200).json({ msg: "INSERT สำเร็จ" });
-//         } else {
-//             return res.status(400).json({ msg: "INSERT ไม่าสำเร็จ" });
-//         }
-//     } catch (error) {
-//         console.error("Error in /insertprofile endpoint:", error);
-//         return res.status(500).json({ error: "Internal server error", details: error.message });
-//     }
-// });
 
 router.post("/typecar", async (req, res) => {
     try {
-        const { btnnunmber, btnnunmber1, btnnunmber2, cartype, colorcar, user_ID } = req.body;
+        const token = req.header('Authorization');
 
-        // Try to insert the record
-        const INSERT = await db.query('INSERT INTO public.carnumber (car_number, car_country, car_text, cartype, carcolor) VALUES ($1, $2, $3, $4, $5) RETURNING *', [btnnunmber, btnnunmber1, btnnunmber2, cartype, colorcar]);
-
-        if (INSERT.rowCount) {
-            return res.status(200).json({ data: INSERT.rows[0], msg: "Insert successful" });
-        } else {
-            // If insertion fails, try to update the existing record
-            const UPDATE = await db.query('UPDATE public.carnumber SET car_country = $1, car_text = $2, cartype = $3, carcolor = $4 WHERE user_ID = $5 RETURNING *', [btnnunmber1, btnnunmber2, cartype, colorcar, user_ID]);
-
-            if (UPDATE.rowCount) {
-                return res.status(200).json({ data: UPDATE.rows[0], msg: "Update successful" });
-            } else {
-                return res.status(400).json({ msg: "Insert and Update failed" });
+        const user_id = (JSON.parse(token)).user_id
+        console.log(user_id)
+        if (user_id) {
+            const { btnnunmber, btnnunmber1, btnnunmber2, cartype, colorcar } = req.body;
+            const UPDATE = await db.query('UPDATE public.carnumber SET car_country = $1, car_text = $2, cartype = $3, carcolor = $4 WHERE user_id = $5', [btnnunmber, btnnunmber1, btnnunmber2, cartype, colorcar]);
+            if (UPDATE) {
+                res.status(200).json({ message: 'Profile updated successfully' });
             }
+            else {
+                res.status(500).json({ error: 'Failed to update profile', details: 'No rows affected' });
+            }
+        } else {
+            return res.status(400).json({ msg: "Insert and Update failed" });
         }
     } catch (error) {
         console.error("Error in /typecar endpoint:", error);
@@ -143,89 +129,65 @@ router.post("/typecar", async (req, res) => {
 
 router.post("/updateprofile", async (req, res) => {
     try {
-        const { newName, newLastName, newStudentID, newPhone, dt_date, gander_e, btn_img1 } = req.body;
+        const token = req.header('Authorization');
 
-        // ตรวจสอบว่าค่าที่ส่งมาไม่ใช่ null หรือ undefined
-        if (newName === undefined || newLastName === undefined || newStudentID === undefined ||
-            newPhone === undefined || dt_date === undefined || gander_e === undefined ||
-            btn_img1 === undefined) {
-            return res.status(400).json({ message: 'ข้อมูลไม่ครบถ้วน' });
-        }
+        const user_id = (JSON.parse(token)).user_id
+        console.log(user_id)
+        if (token) {
+            const { newName, newLastName, newStudentID, newPhone, dt_date, gander_e, btn_img1 } = req.body;
 
-        // ดึง user_id จากฐานข้อมูล
-        const email = req.body.email; // Assuming the email is sent in the request body
-        const getUserIdQuery = 'SELECT user_id FROM public.user WHERE email = $1';
-        
-        try {
-            const result = await db.query(getUserIdQuery, [email]);
+            const update = await db.query('UPDATE public.user SET firstname = $1, lastname = $2, student_id = $3, phone = $4, birthday = $5, gander = $6, img_pro = $7 WHERE user_id = $8;', [newName, newLastName, newStudentID, newPhone, dt_date, gander_e, btn_img1, user_id]);
 
-            if (!result || result.rows.length === 0) {
-                return res.status(404).json({ message: 'ไม่พบผู้ใช้ที่ตรงกับชื่อและนามสกุลที่ระบุ' });
+            if (update) {
+                res.status(200).json({ message: 'Profile updated successfully' });
+            } else {
+                res.status(500).json({ error: 'Failed to update profile', details: 'No rows affected' });
             }
-
-            const user_id = result.rows[0].user_id;
-
-            // Try to update the record
-            const updateQuery = 'UPDATE public.user SET firstname = $1, lastname = $2, student_id = $3, phone = $4, birthday = $5, gander = $6, img_pro = $7 WHERE user_id = $8';
-            await db.query(updateQuery, [newName, newLastName, newStudentID, newPhone, dt_date, gander_e, btn_img1, user_id]);
-
-            res.status(200).json({ message: 'การอัปเดตเสร็จสมบูรณ์' });
-        } catch (error) {
-            console.error("Error in /updateprofile endpoint:", error);
-            return res.status(500).json({ error: "Internal server error", details: error.message });
+        } else {
+            return res.status(401).json({ message: 'Unauthorized' });
         }
     } catch (error) {
-        console.error("Error in /updateprofile endpoint:", error);
-        return res.status(500).json({ error: "Internal server error", details: error.message });
+        res.status(500).json({ error: 'Failed to update profile', details: error.message });
     }
 });
 
-  
-  
 
 
 
 
 
-
-
-
-
-
-
-
-  router.post("/camerasend", async (req, res) => {
+router.post("/camerasend", async (req, res) => {
     try {
-      const { base64String } = req.body;
-  
-      // Check if the 'camera' property exists in the request body
-      if (!base64String) {
-        return res.status(400).json({ error: "Missing 'camera' property in the request body" });
-      }
-  
-      // Process the 'camera' data as needed
-    //   console.log(base64String);
-      // ส่งข้อมูลไปให้ python
-      const apiUrl = 'http://localhost:5000/api/hello';
-      const jsonData = { a: base64String };
+        const { base64String } = req.body;
+
+        // Check if the 'camera' property exists in the request body
+        if (!base64String) {
+            return res.status(400).json({ error: "Missing 'camera' property in the request body" });
+        }
+
+        // Process the 'camera' data as needed
+        //   console.log(base64String);
+        // ส่งข้อมูลไปให้ python
+        const apiUrl = 'http://localhost:5000/api/hello';
+        const jsonData = { a: base64String };
         axios.post(apiUrl, jsonData)
-        .then(response => {
-            console.log('Response from the server:', response.data);
-        })
-        .catch(error => {
-            console.error('Error:', error.message);
-        });
+            .then(response => {
+                console.log('Response from the server:', response.data);
+            })
+            .catch(error => {
+                console.error('Error:', error.message);
+            });
 
 
-      // Send a success response to the client
-      return res.status(200).json({ message: "รอฟังก์ชั่นอื่นส่งค่ามา" });
+        // Send a success response to the client
+        return res.status(200).json({ message: "รอฟังก์ชั่นอื่นส่งค่ามา" });
     } catch (error) {
-      console.error("Error in /camerasend endpoint:", error);
-  
-      // Send an error response to the client
-      return res.status(500).json({ error: "Internal server error" });
+        console.error("Error in /camerasend endpoint:", error);
+
+        // Send an error response to the client
+        return res.status(500).json({ error: "Internal server error" });
     }
-  });
+});
 
 
 
@@ -249,7 +211,7 @@ router.post("/token", async (req, res) => {
 
         const u_id = token_data.user_id
 
-        console.log(u_id)
+        // console.log(u_id)
         const SELECT = await db.query(
             `SELECT user_id FROM public.user WHERE user_id = $1 `, [u_id]);
         if (SELECT.rowCount) {
@@ -274,7 +236,7 @@ router.post("/showprofile", async (req, res) => {
         if (SELECT.rowCount) {
             const user_id = SELECT.rows[0].user_id;
 
-            return res.status(200).json({ data: { user_id} });
+            return res.status(200).json({ data: { user_id } });
         } else {
             return res.status(400).json({ msg: "Login failed" });
         }
