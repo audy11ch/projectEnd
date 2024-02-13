@@ -258,7 +258,7 @@ router.post('/Get-Profile', async (req, res) => {
         console.log(user_id);
 
         // Use user_id in your database query
-        const data = await db.query('SELECT user_id, student_id, firstname, lastname FROM public.user WHERE user_id = $1', [user_id]);
+        const data = await db.query('SELECT user_id, student_id, firstname, lastname ,img_pro FROM public.user WHERE user_id = $1', [user_id]);
 
         if (data && data.rows.length > 0) {
             return res.status(200).json({ ms: 'good', data: data.rows });
