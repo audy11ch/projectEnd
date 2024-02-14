@@ -258,12 +258,20 @@ router.post('/Get-Profile', async (req, res) => {
         console.log(user_id);
 
         // Use user_id in your database query
-        const data = await db.query('SELECT user_id, student_id, firstname, lastname ,img_pro FROM public.user WHERE user_id = $1', [user_id]);
+        const data = await db.query('SELECT user_id, student_id, firstname, lastname, img_pro, phone, email, gander, birthday FROM public.user WHERE user_id = $1', [user_id]);
+        const carData = await db.query('SELECT user_id, car_number, car_text, car_country, cartype, carcolor FROM public.carnumber WHERE user_id = $1', [user_id]);
 
-        if (data && data.rows.length > 0) {
-            return res.status(200).json({ ms: 'good', data: data.rows });
+        // Check if userData or carData is present and return the appropriate response
+        if (data.rows.length > 0) {
+            const response = { status: 'success', data: data.rows };
+
+            if (carData.rows.length > 0) {
+                response.data = [...response.data, ...carData.rows];
+            }
+
+            return res.status(200).json(response);
         } else {
-            return res.status(404).json({ ms: 'not found', details: 'User not found' });
+            return res.status(404).json({ status: 'not found', details: 'User not found' });
         }
     } catch (error) {
         return res.status(500).json({ error: "Internal server error", details: error.message });
