@@ -319,7 +319,7 @@ router.post('/Get-Profile', async (req, res) => {
         console.log(user_id);
 
         // Use user_id in your database query
-        const data = await db.query('SELECT user_id, student_id, firstname, lastname, img_pro, phone, email, gander, birthday FROM public.user WHERE user_id = $1', [user_id]);
+        const data = await db.query('SELECT user_id, student_id, firstname, lastname, img_pro, phone, email, gander, birthday,driving_license FROM public.user WHERE user_id = $1', [user_id]);
         const carData = await db.query('SELECT user_id, car_number, car_text, car_country, cartype, carcolor FROM public.carnumber WHERE user_id = $1', [user_id]);
 
         // Check if userData or carData is present and return the appropriate response
@@ -336,6 +336,41 @@ router.post('/Get-Profile', async (req, res) => {
         }
     } catch (error) {
         return res.status(500).json({ error: "Internal server error", details: error.message });
+    }
+});
+router.post("/driving_img", async (req, res) => {
+    try {
+        const token = req.header('Authorization');
+
+        if (!token) {
+            return res.status(401).json({ success: false, message: "Unauthorized: Token missing" });
+        }
+
+        const user_id = JSON.parse(token).user_id;
+
+        if (!user_id) {
+            return res.status(401).json({ success: false, message: "Unauthorized: Invalid user ID in token" });
+        }
+
+        const { driving_license } = req.body;
+
+        if (!driving_license) {
+            return res.status(400).json({ success: false, message: "Bad Request: Missing driving license in request body" });
+        }
+
+        const updatedriving = await db.query(
+            'UPDATE public.user SET driving_license = $1 WHERE user_id = $2;', 
+            [driving_license, user_id]
+        );
+
+        if (updatedriving.rowCount) {
+            return res.status(200).json({ success: true, message: 'Driving license updated successfully', data: updatedriving.rows[0] });
+        } else {
+            return res.status(404).json({ success: false, message: "Not Found: User not found or driving license not updated." });
+        }
+    } catch (error) {
+        console.error("Error in /driving_img endpoint:", error);
+        return res.status(500).json({ success: false, error: "Internal Server Error", details: error.message });
     }
 });
 
