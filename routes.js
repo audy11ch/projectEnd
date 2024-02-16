@@ -55,11 +55,11 @@ router.post("/check_email", async (req, res) => {
         const SELECT = await db.query(
             `SELECT user_id FROM public.user WHERE email = $1`,
             [email]
-           
+
         );
         if (SELECT.rowCount) {
             const user_id = SELECT.rows[0].user_id;
-            
+
             return res.status(200).json({ data: { user_id } });
         } else {
             return res.status(401).json({ msg: "Login failed" });
@@ -72,19 +72,19 @@ router.post("/check_email", async (req, res) => {
 
 router.post("/updatepass", async (req, res) => {
     try {
-        const { password , user_id} = req.body;
+        const { password, user_id } = req.body;
         // const user_id = req.body.user_id;
-        console.log(password,user_id)
+        console.log(password, user_id)
         // const SELECT = await db.query(
         //     `SELECT user_id FROM public.user WHERE email = $1`,
         //     [password]
-           
+
         // );
         if (password && user_id) {
             // const { password } = req.body;
             const update = await db.query('UPDATE public.user SET password = $1 WHERE user_id = $2;',
                 [password, user_id]);
-            if (update.rowCount){
+            if (update.rowCount) {
                 return res.status(200).json({ message: 'Password updated successfully' });
             } else {
                 return res.status(404).json({ message: 'User not found' });
@@ -203,6 +203,29 @@ router.post("/updateprofile", async (req, res) => {
     }
 });
 
+router.post("/editpass", async (req, res) => {
+    try {
+        const token = req.header('Authorization');
+        const user_id = (JSON.parse(token)).user_id
+        console.log(user_id)
+        if (user_id) {
+            const { password } = req.body;
+
+            const update = await db.query('UPDATE public.user SET password = $1 WHERE user_id = $2;',
+                [password, user_id]);
+
+                if (update.rowCount) {
+                    return res.status(200).json({ message: 'Password updated successfully' });
+                } else {
+                    return res.status(404).json({ message: 'User not found' });
+                }
+        } else {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update profile', details: error.message });
+    }
+});
 
 
 router.post("/camerasend", async (req, res) => {
