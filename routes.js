@@ -208,15 +208,11 @@ router.post("/updateprofile", async (req, res) => {
 router.post("/camerasend", async (req, res) => {
     try {
         const { base64String } = req.body;
-
-        // Check if the 'camera' property exists in the request body
+        console.log(base64String) 
         if (!base64String) {
             return res.status(400).json({ error: "Missing 'camera' property in the request body" });
         }
 
-        // Process the 'camera' data as needed
-        //   console.log(base64String);
-        // ส่งข้อมูลไปให้ python
         const apiUrl = 'http://localhost:5000/api/hello';
         const jsonData = { a: base64String };
         axios.post(apiUrl, jsonData)
@@ -228,12 +224,10 @@ router.post("/camerasend", async (req, res) => {
             });
 
 
-        // Send a success response to the client
-        return res.status(200).json({ message: "รอฟังก์ชั่นอื่นส่งค่ามา" });
+        return res.status(200).json({ message: base64String });
     } catch (error) {
         console.error("Error in /camerasend endpoint:", error);
 
-        // Send an error response to the client
         return res.status(500).json({ error: "Internal server error" });
     }
 });
