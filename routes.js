@@ -206,7 +206,7 @@ router.post("/editpass", async (req, res) => {
 router.post("/camerasend", async (req, res) => {
     try {
         const { base64String } = req.body;
-        console.log(base64String);
+
         if (!base64String) {
             return res.status(400).json({ error: "Missing 'base64String' property in the request body" });
         }
@@ -214,27 +214,57 @@ router.post("/camerasend", async (req, res) => {
         const apiUrl = 'http://localhost:5000/api/hello';
         const jsonData = { a: base64String };
         const response = await axios.post(apiUrl, jsonData);
-        console.log('Response from the server:', response.data);
+        console.log(response.data);
 
         // Assuming response.data contains the text extracted from the image
         const carNumber = response.data.license_plate;
 
-        // Sanitize and validate carText before using it in the query
-        const SELECT = await db.query(
+        // Sanitize and validate carNumber before using it in the query (for security)
+        // ...
+
+        // Execute the database query to find carNumber in public.carnumber
+        const SELECT_CAR_NUMBER = await db.query(
             `SELECT * FROM public.carnumber WHERE car_number = $1`,
             [carNumber]
-            ``
         );
-        if (SELECT.rows.length > 0){
-        console.log(SELECT.rows);
-        return res.status(200).json({ message: SELECT.rows });
-    }
-        return res.status(200).json({ message: base64String });
+
+        if (SELECT_CAR_NUMBER.rows.length > 0) {
+            const user_id_from_carnumber = SELECT_CAR_NUMBER.rows[0].user_id;
+
+            const SELECT_USER = await db.query(
+                `SELECT * FROM public.user WHERE user_id = $1`,
+                [user_id_from_carnumber]
+            );
+
+            if (SELECT_USER.rows.length > 0) {
+                // Handle the user data as needed
+                const userData = SELECT_USER.rows[0];
+                
+                // Combine car and user data into a response object
+                const combinedResponse = {
+                    data: {
+                        car: SELECT_CAR_NUMBER.rows[0],
+                        user: userData
+                    }
+                };
+
+                return res.status(200).json(combinedResponse);
+            } else {
+                // Handle the case where the user_id from public.carnumber doesn't exist in public.user
+                console.log('User not found in public.user');
+                return res.status(404).json({ error: 'User not found' });
+            }
+        } else {
+            // Handle the case where car_number doesn't exist in public.carnumber
+            console.log('Car number not found in public.carnumber');
+            return res.status(404).json({ error: 'Car number not found' });
+        }
     } catch (error) {
         console.error("Error in /camerasend endpoint:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 });
+
 
 
 
