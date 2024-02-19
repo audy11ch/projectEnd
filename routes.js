@@ -105,7 +105,7 @@ const tokenRefreshKey = process.env.TOKEN_KEY_REFRESH || 'your_default_token_ref
 
 router.post("/register", async (req, res) => {
     try {
-        const { Name, lastname, phone, email, password, studentID, carint, cartext, carcouty } = req.body;
+        const { Name, lastname, phone, email, password, studentID, carint ,carcouty} = req.body;
 
         const INSERT_USER = await db.query(
             'INSERT INTO public.user (firstname, lastname, phone, email, student_id, password) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
@@ -116,8 +116,8 @@ router.post("/register", async (req, res) => {
             const user_id = INSERT_USER.rows[0].user_id;
 
             const INSERT_CAR = await db.query(
-                'INSERT INTO public.carnumber (car_number, car_country, car_text, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
-                [carint, cartext, carcouty, user_id]
+                'INSERT INTO public.carnumber (car_number, car_country, user_id) VALUES ($1, $2, $3) RETURNING *',
+                [carint, carcouty ,user_id]
             );
 
             if (INSERT_CAR.rowCount) {
@@ -145,31 +145,6 @@ router.post("/register", async (req, res) => {
     }
 });
 
-// router.post("/typecar", async (req, res) => {
-//     try {
-//         const token = req.header('Authorization');
-
-//         const user_id = (JSON.parse(token)).user_id
-//         console.log(user_id)
-//         if (user_id) {
-//             const { btnnunmber, btnnunmber1, btnnunmber2, cartype, colorcar } = req.body;
-//             const UPDATE = await db.query('UPDATE public.carnumber SET car_country = $1, car_text = $2, cartype = $3, carcolor = $4 WHERE user_id = $5', [btnnunmber, btnnunmber1, btnnunmber2, cartype, colorcar]);
-//             if (UPDATE) {
-//                 res.status(200).json({ message: 'Profile updated successfully' });
-//             }
-//             else {
-//                 res.status(500).json({ error: 'Failed to update profile', details: 'No rows affected' });
-//             }
-//         } else {
-//             return res.status(400).json({ msg: "Insert and Update failed" });
-//         }
-//     } catch (error) {
-//         console.error("Error in /typecar endpoint:", error);
-//         return res.status(500).json({ error: "Internal server error", details: error.message });
-//     }
-// });
-
-
 
 router.post("/updateprofile", async (req, res) => {
     try {
@@ -178,14 +153,14 @@ router.post("/updateprofile", async (req, res) => {
         const user_id = (JSON.parse(token)).user_id
         console.log(user_id)
         if (user_id) {
-            const { newName, newLastName, newPhone, dt_date, gander_e, btn_img1, carint, cartext, carcounty, cartype, carcolor } = req.body;
+            const { newName, newLastName, newPhone, dt_date, gander_e, btn_img1, carint, carcounty, cartype ,carcolor } = req.body;
 
-            const update = await db.query('UPDATE public.user SET firstname = $1, lastname = $2,phone = $3, birthday = $4, gander = $5, img_pro = $6 WHERE user_id = $7;',
+            const update = await db.query('UPDATE public.user SET firstname = $1, lastname = $2, phone = $3, birthday = $4, gander = $5, img_pro = $6 WHERE user_id = $7;',
                 [newName, newLastName, newPhone, dt_date, gander_e, btn_img1, user_id]);
 
             if (update.rowCount) {
-                const updatecar = await db.query('UPDATE public.carnumber SET car_number = $1, car_text = $2,car_country = $3, cartype = $4, carcolor = $5 WHERE user_id = $6;',
-                    [carint, cartext, carcounty, cartype, carcolor, user_id]);
+                const updatecar = await db.query('UPDATE public.carnumber SET car_number = $1, car_country = $2, cartype = $3, carcolor = $4 WHERE user_id = $5;',
+                    [carint, carcounty, cartype, carcolor, user_id]);
 
                 if (updatecar.rowCount) {
                     return res.status(200).json({ ms: 'good', data: updatecar.rows[0] });
@@ -321,7 +296,7 @@ router.post('/Get-Profile', async (req, res) => {
 
         // Use user_id in your database query
         const data = await db.query('SELECT user_id, student_id, firstname, lastname, img_pro, phone, email, gander, birthday,driving_license FROM public.user WHERE user_id = $1', [user_id]);
-        const carData = await db.query('SELECT user_id, car_number, car_text, car_country, cartype, carcolor FROM public.carnumber WHERE user_id = $1', [user_id]);
+        const carData = await db.query('SELECT user_id, car_number, car_country, cartype, carcolor FROM public.carnumber WHERE user_id = $1', [user_id]);
 
         // Check if userData or carData is present and return the appropriate response
         if (data.rows.length > 0) {
