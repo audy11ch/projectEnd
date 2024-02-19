@@ -224,7 +224,7 @@ router.post("/camerasend", async (req, res) => {
 
         // Execute the database query to find carNumber in public.carnumber
         const SELECT_CAR_NUMBER = await db.query(
-            `SELECT * FROM public.carnumber WHERE car_number = $1`,
+            'SELECT * FROM public.carnumber WHERE car_number = $1',
             [carNumber]
         );
 
@@ -232,7 +232,7 @@ router.post("/camerasend", async (req, res) => {
             const user_id_from_carnumber = SELECT_CAR_NUMBER.rows[0].user_id;
 
             const SELECT_USER = await db.query(
-                `SELECT * FROM public.user WHERE user_id = $1`,
+                'SELECT * FROM public.user WHERE user_id = $1',
                 [user_id_from_carnumber]
             );
 
