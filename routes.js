@@ -231,29 +231,37 @@ router.post("/editpass", async (req, res) => {
 router.post("/camerasend", async (req, res) => {
     try {
         const { base64String } = req.body;
-        console.log(base64String) 
+        console.log(base64String);
         if (!base64String) {
-            return res.status(400).json({ error: "Missing 'camera' property in the request body" });
+            return res.status(400).json({ error: "Missing 'base64String' property in the request body" });
         }
 
         const apiUrl = 'http://localhost:5000/api/hello';
         const jsonData = { a: base64String };
-        axios.post(apiUrl, jsonData)
-            .then(response => {
-                console.log('Response from the server:', response.data);
-            })
-            .catch(error => {
-                console.error('Error:', error.message);
-            });
+        const response = await axios.post(apiUrl, jsonData);
+        console.log('Response from the server:', response.data);
 
+        // Assuming response.data contains the text extracted from the image
+        const carNumber = response.data.license_plate;
 
+        // Sanitize and validate carText before using it in the query
+        const SELECT = await db.query(
+            `SELECT * FROM public.carnumber WHERE car_number = $1`,
+            [carNumber]
+            ``
+        );
+        if (SELECT.rows.length > 0){
+        console.log(SELECT.rows);
+
+        return res.status(200).json({ message: SELECT.rows });
+    }
         return res.status(200).json({ message: base64String });
     } catch (error) {
         console.error("Error in /camerasend endpoint:", error);
-
         return res.status(500).json({ error: "Internal server error" });
     }
 });
+
 
 
 
