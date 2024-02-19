@@ -252,7 +252,6 @@ router.post("/camerasend", async (req, res) => {
         );
         if (SELECT.rows.length > 0){
         console.log(SELECT.rows);
-
         return res.status(200).json({ message: SELECT.rows });
     }
         return res.status(200).json({ message: base64String });
