@@ -107,37 +107,43 @@ router.post("/register", async (req, res) => {
     try {
         const { Name, lastname, phone, email, password, studentID, carint ,carcouty} = req.body;
 
-        const INSERT_USER = await db.query(
-            'INSERT INTO public.user (firstname, lastname, phone, email, student_id, password) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [Name, lastname, phone, email, studentID, password]
-        );
+        if (!Name || !lastname || !phone || !email || !password || !studentID || !carint || !carcouty) {
+            return res.status(400).json({ msg: 'โปรดกรอกให้ครบ' });
+        }
+        else{
 
-        if (INSERT_USER.rowCount) {
-            const user_id = INSERT_USER.rows[0].user_id;
-
-            const INSERT_CAR = await db.query(
-                'INSERT INTO public.carnumber (car_number, car_country, user_id) VALUES ($1, $2, $3) RETURNING *',
-                [carint, carcouty ,user_id]
+            const INSERT_USER = await db.query(
+                'INSERT INTO public.user (firstname, lastname, phone, email, student_id, password) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+                [Name, lastname, phone, email, studentID, password]
             );
-
-            if (INSERT_CAR.rowCount) {
-                const token = jwt.sign(
-                    { user_id, email, Name, lastname },
-                    tokenKey,
-                    { expiresIn: "99y" }
+    
+            if (INSERT_USER.rowCount) {
+                const user_id = INSERT_USER.rows[0].user_id;
+    
+                const INSERT_CAR = await db.query(
+                    'INSERT INTO public.carnumber (car_number, car_country, user_id) VALUES ($1, $2, $3) RETURNING *',
+                    [carint, carcouty ,user_id]
                 );
-                const tokenRefresh = jwt.sign(
-                    { user_id, email, Name, lastname },
-                    tokenRefreshKey,
-                    { expiresIn: "99y" }
-                );
-
-                return res.status(200).json({ data: { user_id, token, tokenRefresh } });
+    
+                if (INSERT_CAR.rowCount) {
+                    const token = jwt.sign(
+                        { user_id, email, Name, lastname },
+                        tokenKey,
+                        { expiresIn: "99y" }
+                    );
+                    const tokenRefresh = jwt.sign(
+                        { user_id, email, Name, lastname },
+                        tokenRefreshKey,
+                        { expiresIn: "99y" }
+                    );
+    
+                    return res.status(200).json({ data: { user_id, token, tokenRefresh } });
+                } else {
+                    return res.status(400).json({ msg: 'Car insertion failed' });
+                }
             } else {
-                return res.status(400).json({ msg: 'Car insertion failed' });
+                return res.status(400).json({ msg: 'User insertion failed' });
             }
-        } else {
-            return res.status(400).json({ msg: 'User insertion failed' });
         }
     } catch (error) {
         console.error("Error in /register endpoint:", error);
