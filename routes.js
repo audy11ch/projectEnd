@@ -153,14 +153,14 @@ router.post("/updateprofile", async (req, res) => {
         const user_id = (JSON.parse(token)).user_id
         console.log(user_id)
         if (user_id) {
-            const { newName, newLastName, newPhone, dt_date, gander_e, btn_img1, carint, carcounty, cartype ,carcolor } = req.body;
+            const { newName, newLastName, newPhone, dt_date, gander_e, btn_img1, carint, carcounty, cartype ,carcolor ,piccar} = req.body;
 
             const update = await db.query('UPDATE public.user SET firstname = $1, lastname = $2, phone = $3, birthday = $4, gander = $5, img_pro = $6 WHERE user_id = $7;',
                 [newName, newLastName, newPhone, dt_date, gander_e, btn_img1, user_id]);
 
             if (update.rowCount) {
-                const updatecar = await db.query('UPDATE public.carnumber SET car_number = $1, car_country = $2, cartype = $3, carcolor = $4 WHERE user_id = $5;',
-                    [carint, carcounty, cartype, carcolor, user_id]);
+                const updatecar = await db.query('UPDATE public.carnumber SET car_number = $1, car_country = $2, cartype = $3, carcolor = $4 , img_car = $5 WHERE user_id = $6;',
+                    [carint, carcounty, cartype, carcolor, piccar ,user_id]);
 
                 if (updatecar.rowCount) {
                     return res.status(200).json({ ms: 'good', data: updatecar.rows[0] });
