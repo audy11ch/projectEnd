@@ -208,6 +208,61 @@ router.post("/editpass", async (req, res) => {
     }
 });
 
+router.post("/datacarV2", async (req, res) => {
+    try {
+        const { datacarv2 } = req.body;
+
+        // Check if datacarv2 is missing in the request body
+        if (!datacarv2) {
+            return res.status(400).json({ error: "Missing 'datacarv2' property in the request body" });
+        }
+
+        // Query the car number in the database
+        const CAR_NUMBER = await db.query(
+            'SELECT * FROM public.carnumber WHERE car_number = $1', [datacarv2]
+        );
+
+        // Check if the car number exists in public.carnumber
+        if (CAR_NUMBER.rows.length > 0) {
+            const user_id_from_carnumber = CAR_NUMBER.rows[0].user_id;
+
+            // Query user data using user_id from public.carnumber
+            const SELECT_USER = await db.query(
+                'SELECT * FROM public.user WHERE user_id = $1',
+                [user_id_from_carnumber]
+            );
+
+            // Check if the user exists in public.user
+            if (SELECT_USER.rows.length > 0) {
+                // Handle the user data as needed
+                const userData = SELECT_USER.rows[0];
+
+                // Combine car and user data into a response object
+                const combinedResponse = {
+                    data: {
+                        car: CAR_NUMBER.rows[0],
+                        user: userData
+                    }
+                };
+
+                return res.status(200).json(combinedResponse);
+            } else {
+                // Handle the case where the user_id from public.carnumber doesn't exist in public.user
+                console.log('User not found in public.user');
+                return res.status(404).json({ error: 'User not found' });
+            }
+        } else {
+            // Handle the case where car_number doesn't exist in public.carnumber
+            console.log('Car number not found in public.carnumber');
+            return res.status(404).json({ error: 'Car number not found' });
+        }
+    } catch (error) {
+        // Handle unexpected errors
+        console.error("Error in /datacarV2 endpoint:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 
 router.post("/camerasend", async (req, res) => {
     try {
